@@ -117,6 +117,45 @@ def print_lightinfo(_DI,_sl,_slp,_lrl, _ts):
         _state = ['NO','YES']
         strtmp += 'LedJar Operation?            : %s \n' % _state[operate]
         return strtmp
+
+
+def JSONtoFile(f_name, str_to_write):
+        try:
+                f = open(f_name, 'r+')
+        except IOError as e:
+                print f_name, '  Created '
+                f = open(f_name, 'w+')
+
+        f.read()
+        pos = f.tell()
+        f.seek(pos)
+
+        f.write(str_to_write)
+        f.close()
+
+
+def WheatherLOG(f_name, str_to_write, date_str):
+        try:
+                f = open(f_name, 'r+')
+        except IOError as e:
+                print f_name, '  Created '
+                f = open(f_name, 'w+')
+
+        data = f.read()
+        if data.find(date_str) != -1:
+                f.close()
+                return
+        pos = f.tell()
+        f.seek(pos)
+
+        f.write(str_to_write)
+        f.close()
+
+
+def print_Info(strings):
+        strs = time.strftime('[%H:%M:%S]') + str(strings)
+        print strs
+        writeDataToFile('mqtt_log.txt', strs)
 #---------------------------------------------------------------------------------------------
 
 #String Procession function 
