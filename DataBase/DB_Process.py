@@ -2,7 +2,9 @@ import sqlite3
 import os
 
 class DBProc:
+
     def __init__(self):
+        self.DB_count = 0
         pass
 
     def DBSelectAll(self,db_file_name,db_name):
@@ -97,6 +99,10 @@ class DBProc:
         insert_txt += ')'
         c.execute(insert_txt, tuple_cont)
         conn.commit()
+        total_count = 0
+        for i in c.execute('SELECT count(ID) FROM %s' % db_name):
+            total_count = i[0]
+        self.DB_count = total_count
         conn.close()
 
     def DBInsertMany(self,db_file_name,db_name,unique_para,db_contents):
@@ -161,8 +167,16 @@ class DBProc:
             q_list.append('?')
         insert_txt += ','.join(q_list)
         insert_txt += ')'
+
         c.executemany(insert_txt, inset_query)
+
+
+
         conn.commit()
+        total_count = 0
+        for i in c.execute('SELECT count(ID) FROM %s' % db_name):
+            total_count = i[0]
+        self.DB_count = total_count
         conn.close()
 
     def DBDelete(self,db_file_name,db_name, db_key, val):
@@ -185,8 +199,16 @@ class DBProc:
             for i in range(val,total_count):
                 c.execute('UPDATE %s SET ID = %d WHERE ID = %d ' %(db_name,i,i+1))
 
+
+
         # need update ID
         conn.commit()
+
+        total_count = 0
+        for i in c.execute('SELECT count(ID) FROM %s' % db_name):
+            total_count = i[0]
+        self.DB_count = total_count
+
         conn.close()
 
     def DBDeleteRange(self,db_file_name,db_name, db_key, id_start, id_end):
@@ -219,6 +241,12 @@ class DBProc:
 
         # need update ID
         conn.commit()
+
+        total_count = 0
+        for i in c.execute('SELECT count(ID) FROM %s' % db_name):
+            total_count = i[0]
+        self.DB_count = total_count
+
         conn.close()
         
 if __name__ == "__main__":
@@ -279,7 +307,8 @@ if __name__ == "__main__":
     #for i in range(7):
 
     DB_weather.DBInsertMany(DB_filename, DB_name, 'Date' ,contents)
-    DB_weather.DBSelectAll(DB_filename, DB_name)
-    DB_weather.DBDeleteRange('Wheather.db', 'wheather_info', 'ID', 4,37)
+    #DB_weather.DBSelectAll(DB_filename, DB_name)
+    #DB_weather.DBDeleteRange('Wheather.db', 'wheather_info', 'ID', 4,37)
     DB_weather.DBSelectAll(DB_filename,DB_name)
+    print DB_weather.DB_count
     #print len(DB_weather.DBSelectOneByKey('/root/Home_IOT/DB/Wheather.db', 'wheather_info', 'DATE','2016-10-20 12:00:00'))

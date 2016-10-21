@@ -369,7 +369,7 @@ def MakeMsgToSendPISA(msgs):
 	msg_list = msgs.split(';')
 	return_list = list()
 	try:
-		wheather_main = msg_list[1].split(':')[1]
+		wheather_main = msg_list[0].split(':')[1]
 		if wheather_main.find('Cloud') != -1:
 			return_list.append('Cloud')
 		elif wheather_main.find('Rain')!= -1:
@@ -381,8 +381,12 @@ def MakeMsgToSendPISA(msgs):
 	except:
 		print_mqttinfo('msg error !!')
 
-	temp = msg_list[2].split(':')[1]
+	temp = msg_list[1].split(':')[1]
 	return_list.append(temp)
+
+	comp = msg_list[2].split(':')[1]
+	return_list.append(comp)
+
 	tmp_str = '/'.join(return_list)
 	tmp_str = '<'+tmp_str+'>'
 	print tmp_str

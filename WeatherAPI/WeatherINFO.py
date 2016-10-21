@@ -36,6 +36,52 @@ cond_flag = False
 cond_flag_old = False
 start_up = True
 dis_times = 0
+db_file_name = '/root/Home_IOT/DB/Wheather.db'
+db_table_name = 'wheather_info'
+
+def compareTemp(w_db, date_to_compare, current_temp):
+    # type: (object, object, object) -> object
+    date, time = date_to_compare.split()
+    date = date.split('-')
+    time = time.split(':')
+
+
+    if int(time[0])%3 > 0:
+        now = datetime.datetime.now()
+        min_time = now.replace(hour = 3*(int(time[0])/3), minute=0,second = 0)
+        max_time = now.replace(hour = 3*(int(time[0])/3) + 3, minute= 0, second=0)
+        cur_time = now.replace(hour = int(time[0]), minute= int(time[1]), second=int(time[2]))
+        if (cur_time - min_time > max_time - cur_time) == True:
+            cmp_time = max_time
+        else:
+            cmp_time= min_time
+    else:
+
+        cmp_time = datetime.datetime(year= int(date[0]), month= int(date[1]), day= int(date[2]), hour =int(time[0]), minute= 0, second=0)
+
+
+    yesterday = datetime.datetime(year = int(date[0]), month = int(date[1]), day = int(date[2])-1, hour=cmp_time.hour, minute=0, second=0)
+    date_str = yesterday.strftime('%Y-%m-%d %H:%M:%S')
+
+    print date_str
+
+    try:
+        temp = w_db.DBSelectOneByKey(db_file_name, db_table_name, 'DATE',date_str)
+        if len(temp) > 1:
+            print_info('-------------------------DB has 2 data -----------------------------')
+        elif len(temp) < 1:
+            return 0xff
+
+        print temp
+        temp = temp[0][3]
+        if temp < current_temp:
+            return 1
+        else:
+            return 0
+    except:
+        return 0xff
+
+
 
 
 def SaveWeatherInFo(urls, file_name, table_name, db_class):
@@ -52,6 +98,9 @@ def SaveWeatherInFo(urls, file_name, table_name, db_class):
         query_list.append((str(wheather_date), str(wheather) ,round(temp,2)))
 
     db_class.DBInsertMany(file_name,table_name,'Date',query_list)
+
+    if db_class.DB_count == 50:
+        db_class.DBDeleteRange(file_name, table_name, 'ID', 1, 8)
 
 def RequestWeatherInFo(urls,dis_date,dis_time, *args):
     resp = requests.get(url=urls, params=params)
@@ -109,11 +158,7 @@ print time.localtime()
 mqttc = mqtt.Client()
 mqttc.connect("127.0.0.1",1883)
 
-def MakeStringToSend(dics):
-    return_str = ''
-    for key, val in dics.iteritems():
-        return_str +=  key+':'+str(val)+';'
-    return return_str
+
 
 def on_connect(client, userdata, flags, rc):
     print ("Connencted with result code " + str(rc))
@@ -192,8 +237,7 @@ mqtt_command.start()
 
 
 
-db_file_name = '/root/Home_IOT/DB/Wheather.db'
-db_table_name = 'wheather_info'
+
 DB_wheather = DB_Process.DBProc()
 arg = ('Date text', 'Wheather text', 'Temp real')
 DB_wheather.DBCreate(db_file_name, db_table_name, arg)
@@ -240,9 +284,13 @@ while True:
                 print_Info( 'Weather Forcast')
                 data = RequestWeatherInFo(url_current_forecast,1 ,get_request_time,['main','temp'],['weather','main'])
 
-            print_Info('Weather main: ' + data['WT']+'  temperature : ' + str(data['TEMP']))
+            com_val = compareTemp(DB_wheather, data['DATE'] + ' ' + data['TIME'], data['TEMP'])
+            print_Info('Weather main: ' + data['WT']+'  temperature : ' + str(data['TEMP']) + 'compare temp  = ' + str(com_val))
 
-            string_to_send = MakeStringToSend(data)
+            string_to_send = str()
+            string_to_send += 'WT:%s;' %  data['WT']
+            string_to_send += 'TEMP:%.2f;' % data['TEMP']
+            string_to_send += 'COMP:%d' % com_val
             MQTT_publish("IOT_dat/weather", string_to_send)
             start_up = False
         cond_flag_old = cond_flag
