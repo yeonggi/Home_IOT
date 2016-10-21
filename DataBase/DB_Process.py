@@ -21,6 +21,18 @@ class DBProc:
             print i
         conn.close()
 
+    def DBSelectOneByKey(self,db_file_name,db_name, key, value):
+        conn = sqlite3.connect(db_file_name)
+        conn.row_factory = sqlite3.Row
+        c = conn.cursor()
+
+        query = 'SELECT * FROM %s WHERE %s = "%s"' % (db_name,key,value)
+        ret = c.execute(query)
+        str = ret.fetchall()
+
+        conn.close()
+        return str
+
     def DBSelectAllOrderBy(self,db_file_name,db_name, order_key):
         conn = sqlite3.connect(db_file_name)
         conn.row_factory = sqlite3.Row
@@ -166,6 +178,7 @@ class DBProc:
         except:
             print 'Delete Fail No data'
         conn.commit()
+
         if val == total_count:
             pass
         elif val < total_count:
@@ -177,9 +190,40 @@ class DBProc:
         conn.close()
 
     def DBDeleteRange(self,db_file_name,db_name, db_key, id_start, id_end):
-        pass
+        conn = sqlite3.connect(db_file_name)
+        c = conn.cursor()
+
+        total_count = 0
+        for i in c.execute('SELECT count(ID) FROM %s' % db_name):
+            total_count = i[0]
+
+        if id_start < 1 or id_end > total_count:
+            print 'Range Fail Return '
+            return
+
+        try:
+            for i in range(id_start, id_end+1):
+                c.execute('delete from %s where %s=%d' % (db_name, db_key, i))
+        except:
+            print 'Delete Fail No data'
+        conn.commit()
+
+        if  id_end == total_count:
+            print 'No process'
+            pass
+        elif id_end < total_count:
+            new_start  = id_start
+            for i in range(id_end+1, total_count+1):
+                c.execute('UPDATE %s SET ID = %d WHERE ID = %d ' % (db_name, new_start,i ))
+                new_start += 1
+
+        # need update ID
+        conn.commit()
+        conn.close()
         
 if __name__ == "__main__":
+    DB_filename = 'Wheather.db'
+    DB_name = 'wheather_info'
     DB_weather = DBProc()
     arg = ('Date text', 'Wheather text', 'Temp real')
     DB_weather.DBCreate('Wheather.db', 'wheather_info',  arg)
@@ -207,6 +251,21 @@ if __name__ == "__main__":
                 , ('2016-03-29 13:00', 'Wind', 34.234)
                 , ('2016-03-30 03:00', 'Storm', -14)
                 , ('2016-03-31 14:00', 'Cloud', 2)
+                , ('2016-04-15 01:00', 'Rain', 123)
+                , ('2016-04-16 10:00', 'Wind', 34.234)
+                , ('2016-04-17 00:00', 'Storm', -14)
+                , ('2016-04-18 14:00', 'Cloud', 2)
+                , ('2016-04-19 15:00', 'Clear', -21)
+                , ('2016-04-20 06:00', 'Rain', 123)
+                , ('2016-04-21 17:00', 'Wind', 34.234)
+                , ('2016-04-22 08:00', 'Storm', -14)
+                , ('2016-04-24 19:00', 'Cloud', 2)
+                , ('2016-04-26 14:00', 'Cloud', 4.4)
+                , ('2016-04-27 13:00', 'Clear', -21)
+                , ('2016-04-28 02:00', 'Rain', 123)
+                , ('2016-04-29 13:00', 'Wind', 34.234)
+                , ('2016-04-30 03:00', 'Storm', -14)
+                , ('2016-04-31 14:00', 'Cloud', 2)
                 ]
 
 
@@ -216,8 +275,11 @@ if __name__ == "__main__":
                 ,('2016-03-09 14:00','FUCK', 34.234)
                 ,('2016-03-10 00:00', 'df', -14)
                 ,('2016-03-11 14:00', 'df', 2)]
-    #DB_weather.DBInsert('Wheather.db', 'wheather_info',contesnt_s)
+    #DB_weather.DBInsert('Wheather.db', 'wheather_info',contents)
     #for i in range(7):
-    #DB_weather.DBDelete('Wheather.db', 'wheather_info','ID', 7)
-    DB_weather.DBInsertMany('Wheather.db', 'wheather_info', 'Date' ,contents)
-    DB_weather.DBSelectAll('Wheather.db', 'wheather_info')
+
+    DB_weather.DBInsertMany(DB_filename, DB_name, 'Date' ,contents)
+    DB_weather.DBSelectAll(DB_filename, DB_name)
+    DB_weather.DBDeleteRange('Wheather.db', 'wheather_info', 'ID', 4,37)
+    DB_weather.DBSelectAll(DB_filename,DB_name)
+    #print len(DB_weather.DBSelectOneByKey('/root/Home_IOT/DB/Wheather.db', 'wheather_info', 'DATE','2016-10-20 12:00:00'))
