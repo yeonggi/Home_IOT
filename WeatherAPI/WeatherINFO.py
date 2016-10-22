@@ -215,18 +215,25 @@ def decode_string(data_str,light_on_time):
         return 4
 
     elif data_str.find('[IR]') >=0:
-        dis_times = data_str[data_str.find('[IR]') + len('[IR]')]
+        ir_code = data_str[data_str.find('[IR]') + len('[IR]')]
+        return_dat = 0
         try:
-            dis_times = int(dis_times) - 1
-            dis_times *= 3
-            if dis_times >= 24:
-                dis_times = 0
-
+            ir_code = int(ir_code)
+            if ir_code == 7:
+                return_dat = 10
+            elif ir_code == 8:
+                return_dat = 11
+            elif ir_code == 9:
+                return_dat = 12
+            else:
+                return_dat = 0
         except:
-            dis_times = 0
+            pass
 
+
+        dis_times = 0
         print_Info( data_str)
-        return 4
+        return return_dat
 
 
     else:
@@ -252,12 +259,16 @@ while True:
     try:
         try:
             data_str = data_queue.get_nowait()
-            res = decode_string(data_str, LIGHT_ON_TIME)
-            if res == 1:
+            decode_res = decode_string(data_str, LIGHT_ON_TIME)
+            if decode_res == 1:
                 print_Info( 'request weather info from light or master')
                 start_up = True
-            elif res == 4:
-                print_Info ('request weather info from light IR or Master')
+            elif decode_res == 4:
+                print_Info ('request weather info from Master')
+                get_request_time = dis_times
+                start_up = True
+            elif 10<= decode_res <= 12:
+                print_info (' Request weather info from IR')
                 get_request_time = dis_times
                 start_up = True
         except:
@@ -281,8 +292,14 @@ while True:
                 data = RequestWeatherInFo(url_current_weather,0 ,0,['main','temp'],['weather','main'])
 
             elif time.localtime().tm_hour > 18 or time.localtime().tm_hour == 0 or get_request_time < 0xff:
-                print_Info( 'Weather Forcast')
-                data = RequestWeatherInFo(url_current_forecast,1 ,get_request_time,['main','temp'],['weather','main'])
+                if decode_res == 10:
+                    print_Info( 'Weather Current ')
+                    data = RequestWeatherInFo(url_current_weather,0 ,0,['main','temp'],['weather','main'])
+                elif decode_res == 12:
+                    SaveWeatherInFo(url_current_forecast,db_file_name,db_table_name,DB_wheather)
+                else:
+                    print_Info( 'Weather Forcast')
+                    data = RequestWeatherInFo(url_current_forecast,1 ,get_request_time,['main','temp'],['weather','main'])
 
             com_val = compareTemp(DB_wheather, data['DATE'] + ' ' + data['TIME'], data['TEMP'])
             print_Info('Weather main: ' + data['WT']+'  temperature : ' + str(data['TEMP']) + 'compare temp  = ' + str(com_val))
