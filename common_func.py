@@ -2,16 +2,25 @@
 # print function 
 import time
 import os
+import sys
 
 #print function 
 #---------------------------------------------------------------------------------------------
 
 def writeDataToFile(f_name,str_to_write):
+        for i in os.listdir(os.getcwd()):
+                if i == 'log':
+                        break
+                else:
+                        os.system('mkdir log')
+                        break
+
+        file_name_path = os.path.join(os.getcwd(),'log',f_name)
         try:
-                f = open(f_name, 'r+')
+                f = open(file_name_path, 'r+')
         except IOError as e:
-                print f_name, '  Created '
-                f=open(f_name,'w+')
+                print file_name_path, '  Created '
+                f=open(file_name_path,'w+')
 
         f.read()
         pos = f.tell()
@@ -230,3 +239,7 @@ def PrintCommand():
 
 
 # ---------------------------------------------------------------------------------------------
+
+if __name__ == "__main__":
+        print 'HI'
+        print_info('fuck you man')
