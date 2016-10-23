@@ -19,42 +19,6 @@ class DummyDeviceThread(threading.Thread):
 		self.function(*self.input_tuple)
 		print "ending " + self.name
 
-class AlarmTimer:
-	kill_evt = 0
-	def __init__(self,name,delay,fuction,*args):
-		self.name = name
-		#if name
-		self.delay = delay
-		self.fuction = fuction
-		self.args = tuple(value for _, value in enumerate(args))
-		self.thread = threading.Timer(self.delay, self.handle_function)
-
-		self.CHECK_TIME = 0
-		self.SESIION_TERMINATE = False
-
-
-	def handle_function(self):
-		self.fuction(*self.args)
-		self.thread = threading.Timer(self.delay, self.handle_function)
-		self.thread.start()
-		if self.kill_evt == 1:
-			self.thread.cancel()
-
-
-	def start(self):
-		print ('[%s]timer start !'%self.name)
-		self.thread.start()
-
-	def cancel(self):
-		print ('[%s]timer stop !'%self.name)
-		self.kill_evt = 1
-		self.thread.cancel()
-
-	def isAlive(self):
-		val = self.thread.isAlive()
-		print ('[%s]timer status %d !'% (self.name, val))
-		return val
-
 class ClockThread (threading.Thread):
     def __init__(self, threadID,time_str,function ,*args):
         threading.Thread.__init__(self)

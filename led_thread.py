@@ -7,15 +7,9 @@ from sock_thread import D_TIME_SESSION
 
 
 
-#RSP_TIME = 6
-#RSP_TRY_COUNT = 5
 
 b_table = ('Dark','Bright')
-#LedJarThreadLock = threading.Lock()
-#WaitTimer = threading.Lock()
 
-#wait_timer = list()
-#wait_timer_dev = list()
 
 class DummyDeviceThread(threading.Thread):
 	def __init__(self,ID,name,function, *args):
@@ -75,38 +69,6 @@ class LedJarTimer:
 		print_timerinfo ('[%s]timer status %d !'% (self.name, val))
 		return val
 
-
-
-"""
-def asgWaitTimer(_wt,_wtd, _d_info, _lrl,_d_name):
-	_wt.append(LedJarTimer(_d_name,RSP_TIME,RSP_TRY_COUNT,asgWaitResponseTimer,_d_info,int(_lrl),_d_name))
-	_wt[len(wait_timer)-1].start()
-	_wtd.append([_d_name, _lrl])
-	_str = ('%s wiat timer set' % _d_name)
-	print _str
-	return _str
-
-def killWaitTimer(_wt,_wtd,_d_name, _lrl):
-	for i in range(len(_wtd)):
-		if _wtd[i][0] == _d_name and _wtd[i][1] == int(_lrl):
-			_wt[i].cancel()
-			_wt.pop(i)
-			_wtd.pop(i)
-			_str = ('%s kill timer' % _d_name)
-			print _str
-			return _str
-	return ' '
-
-def killZombieTimer(_wt,_wtd):
-	for i in range(len(_wt)):
-		if _wt[i].kill_evt == 1:
-			_wt.pop(i)
-			dev = _wtd[i][0]
-			_wtd.pop(i)
-			_str = ('%s kill Zombie Timer' % dev)
-			print _str
-			return _str
-"""
 ### LEDJAR normal def function ###
 
 def popRoomStateFromList(_device_info, _list_light,_c_light_state):

@@ -58,7 +58,6 @@ def recv_thread():
 	while connection_list:
 		
 		try:
-			
 			rd_sock, wr_sock, error_sock = select(connection_list, [], [], 10)
 			for sock in rd_sock:
 				if sock == connection_list[0]:
