@@ -8,12 +8,14 @@ import sys
 #---------------------------------------------------------------------------------------------
 
 def writeDataToFile(f_name,str_to_write):
+        res = 0
         for i in os.listdir(os.getcwd()):
                 if i == 'log':
+                        res = 1
                         break
-                else:
-                        os.system('mkdir log')
-                        break
+
+        if res == 0:
+                os.system('mkdir log')
 
         file_name_path = os.path.join(os.getcwd(),'log',f_name)
         try:
@@ -242,4 +244,3 @@ def PrintCommand():
 
 if __name__ == "__main__":
         print 'HI'
-        print_info('fuck you man')

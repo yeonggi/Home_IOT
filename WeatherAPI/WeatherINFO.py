@@ -49,7 +49,10 @@ def compareTemp(w_db, date_to_compare, current_temp):
     if int(time[0])%3 > 0:
         now = datetime.datetime.now()
         min_time = now.replace(hour = 3*(int(time[0])/3), minute=0,second = 0)
-        max_time = now.replace(hour = 3*(int(time[0])/3) + 3, minute= 0, second=0)
+        if 3*(int(time[0])/3) + 3 == 24:
+            max_time = now.replace(day=now.day+1,hour=0, minute=0, second=0)
+        else:
+            max_time = now.replace(hour = 3*(int(time[0])/3) + 3, minute= 0, second=0)
         cur_time = now.replace(hour = int(time[0]), minute= int(time[1]), second=int(time[2]))
         if (cur_time - min_time > max_time - cur_time) == True:
             cmp_time = max_time
@@ -256,6 +259,7 @@ alarm_1.start()
 
 while True:
     get_request_time = 0xff
+    decode_res = 0
     try:
         try:
             data_str = data_queue.get_nowait()
@@ -269,7 +273,7 @@ while True:
                 start_up = True
             elif 10<= decode_res <= 12:
                 print_info (' Request weather info from IR')
-                get_request_time = dis_times
+                get_request_time = 0xff
                 start_up = True
         except:
             pass
