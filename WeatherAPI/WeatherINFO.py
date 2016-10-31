@@ -59,11 +59,9 @@ def compareTemp(w_db, date_to_compare, current_temp):
         else:
             cmp_time= min_time
     else:
-
         cmp_time = datetime.datetime(year= int(date[0]), month= int(date[1]), day= int(date[2]), hour =int(time[0]), minute= 0, second=0)
 
-
-    yesterday = datetime.datetime(year = int(date[0]), month = int(date[1]), day = int(date[2])-1, hour=cmp_time.hour, minute=0, second=0)
+    yesterday = cmp_time - datetime.timedelta(day=-1)
     date_str = yesterday.strftime('%Y-%m-%d %H:%M:%S')
 
     print date_str
