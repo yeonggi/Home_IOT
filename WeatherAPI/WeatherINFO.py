@@ -23,7 +23,8 @@ from common_func import *
 data_queue = Queue.Queue()
 url_current_weather = 'http://api.openweathermap.org/data/2.5/weather'
 url_current_forecast = 'http://api.openweathermap.org/data/2.5/forecast'
-
+CURRENT = 10
+FORCAST = 11
 params = dict(
     id=1846898, #KR anyang
     APPID='c4ca3e7f12ae57ad1fca3d82f066d33b'
@@ -36,6 +37,7 @@ cond_flag = False
 cond_flag_old = False
 start_up = True
 dis_times = 0
+time_delta = 0
 db_file_name = '/root/Home_IOT/DB/Wheather.db'
 db_table_name = 'wheather_info'
 
@@ -61,7 +63,7 @@ def compareTemp(w_db, date_to_compare, current_temp):
     else:
         cmp_time = datetime.datetime(year= int(date[0]), month= int(date[1]), day= int(date[2]), hour =int(time[0]), minute= 0, second=0)
 
-    yesterday = cmp_time - datetime.timedelta(day=-1)
+    yesterday = cmp_time - datetime.timedelta(days=-1)
     date_str = yesterday.strftime('%Y-%m-%d %H:%M:%S')
 
     print date_str
@@ -101,7 +103,7 @@ def SaveWeatherInFo(urls, file_name, table_name, db_class):
     db_class.DBInsertMany(file_name,table_name,'Date',query_list)
 
     if db_class.DB_count == 50:
-        db_class.DBDeleteRange(file_name, table_name, 'ID', 1, 8)
+        db_class.DBDeleteRange(file_name, table_name, 'ID', 1, 20)
 
 def RequestWeatherInFo(urls,dis_date,dis_time, *args):
     resp = requests.get(url=urls, params=params)
@@ -120,11 +122,7 @@ def RequestWeatherInFo(urls,dis_date,dis_time, *args):
                 rsp_day = data_list[i]['dt']
                 rsp_day = datetime.datetime.fromtimestamp(rsp_day).strftime('%Y-%m-%d %H:%M:%S')
                 rsp_day = rsp_day.split()
-                strs = str()
-                if dis_time == 0xff:
-                    strs = "09 00 00"
-                else:
-                    strs = "%d 00 00" % dis_time
+                strs = "%d 00 00" % dis_time
                 alarm_time = time.strptime(strs, "%H %M %S")
 
                 if (str(rsp_day[0]) == str(com_day)) and (str(rsp_day[1]) == time.strftime('%H:%M:%S',alarm_time)):
@@ -185,8 +183,13 @@ def MQTT_publish( msg_topic, pub_str):
 
 def decode_string(data_str,light_on_time):
     global dis_times
+    global time_delta
     if data_str.strip()== 'mqtt_get_weather':
-        return 1
+        print_Info('Req from Master Or Light ')
+        cur_time = time.localtime()
+        if cur_time.tm_hour < 9:
+            time_delta = 0
+        return FORCAST
 
     elif data_str.find('mqtt_set_time') >=0:
         index = data_str.find(':')
@@ -212,18 +215,21 @@ def decode_string(data_str,light_on_time):
         return 3
 
     elif data_str.strip()== 'mqtt_get_forcast':
-        dis_times = 0xfe
-        return 4
+        print_Info('Req from Master or Light')
+        dis_times = 9
+        return 11
 
     elif data_str.find('[IR]') >=0:
+        print_Info('Req from IR ')
         ir_code = data_str[data_str.find('[IR]') + len('[IR]')]
         return_dat = 0
+        dis_times = 0
         try:
             ir_code = int(ir_code)
             if ir_code == 7:
-                return_dat = 10
+                return_dat = CURRENT
             elif ir_code == 8:
-                return_dat = 11
+                return_dat = FORCAST
             elif ir_code == 9:
                 return_dat = 12
             else:
@@ -231,9 +237,6 @@ def decode_string(data_str,light_on_time):
         except:
             pass
 
-
-        dis_times = 0
-        print_Info( data_str)
         return return_dat
 
 
@@ -256,22 +259,14 @@ alarm_1 = ClockThread(1, '07:30:00',SaveWeatherInFo,url_current_forecast, db_fil
 alarm_1.start()
 
 while True:
-    get_request_time = 0xff
+    get_request_time = 9
     decode_res = 0
+    time_delta = 1
     try:
         try:
             data_str = data_queue.get_nowait()
             decode_res = decode_string(data_str, LIGHT_ON_TIME)
-            if decode_res == 1:
-                print_Info( 'request weather info from light or master')
-                start_up = True
-            elif decode_res == 4:
-                print_Info ('request weather info from Master')
-                get_request_time = dis_times
-                start_up = True
-            elif 10<= decode_res <= 12:
-                print_info (' Request weather info from IR')
-                get_request_time = 0xff
+            if 10<= decode_res <= 12:
                 start_up = True
         except:
             pass
@@ -288,29 +283,33 @@ while True:
             cond_flag = False
 
         if (cond_flag == True) and (cond_flag_old == False) or start_up == True:
+            '''
+            ## TIMER module
             print_Info( str(LIGHT_ON_TIME))
             if (0 < time.localtime().tm_hour <= 18) and (get_request_time == 0xff):
                 print_Info( 'Weather Current')
                 data = RequestWeatherInFo(url_current_weather,0 ,0,['main','temp'],['weather','main'])
+            '''
+            print_info('decode_res = %d ' % decode_res)
+            if decode_res == CURRENT:
+                print_Info( 'Weather Current ')
+                data = RequestWeatherInFo(url_current_weather,0 ,0,['main','temp'],['weather','main'])
+            elif decode_res == 12:
+                SaveWeatherInFo(url_current_forecast,db_file_name,db_table_name,DB_wheather)
+            else:
+                print_Info( 'Weather Forcast')
+                data = RequestWeatherInFo(url_current_forecast,time_delta ,get_request_time,['main','temp'],['weather','main'])
+            try:
+                com_val = compareTemp(DB_wheather, data['DATE'] + ' ' + data['TIME'], data['TEMP'])
+                print_Info('Weather main: ' + data['WT']+'  temperature : ' + str(data['TEMP']) + 'compare temp  = ' + str(com_val))
 
-            elif time.localtime().tm_hour > 18 or time.localtime().tm_hour == 0 or get_request_time < 0xff:
-                if decode_res == 10:
-                    print_Info( 'Weather Current ')
-                    data = RequestWeatherInFo(url_current_weather,0 ,0,['main','temp'],['weather','main'])
-                elif decode_res == 12:
-                    SaveWeatherInFo(url_current_forecast,db_file_name,db_table_name,DB_wheather)
-                else:
-                    print_Info( 'Weather Forcast')
-                    data = RequestWeatherInFo(url_current_forecast,1 ,get_request_time,['main','temp'],['weather','main'])
-
-            com_val = compareTemp(DB_wheather, data['DATE'] + ' ' + data['TIME'], data['TEMP'])
-            print_Info('Weather main: ' + data['WT']+'  temperature : ' + str(data['TEMP']) + 'compare temp  = ' + str(com_val))
-
-            string_to_send = str()
-            string_to_send += 'WT:%s;' %  data['WT']
-            string_to_send += 'TEMP:%.2f;' % data['TEMP']
-            string_to_send += 'COMP:%d' % com_val
-            MQTT_publish("IOT_dat/weather", string_to_send)
+                string_to_send = str()
+                string_to_send += 'WT:%s;' %  data['WT']
+                string_to_send += 'TEMP:%.2f;' % data['TEMP']
+                string_to_send += 'COMP:%d' % com_val
+                MQTT_publish("IOT_dat/weather", string_to_send)
+            except:
+                print_info('Error Occured ')
             start_up = False
         cond_flag_old = cond_flag
     except KeyboardInterrupt:
