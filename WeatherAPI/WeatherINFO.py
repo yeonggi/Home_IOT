@@ -88,8 +88,12 @@ def compareTemp(w_db, date_to_compare, current_temp):
 
 
 def SaveWeatherInFo(urls, file_name, table_name, db_class):
-    resp = requests.get(url=urls, params=params)
-    data_dic = json.loads(resp.text)
+    try:
+        resp = requests.get(url=urls, params=params)
+        data_dic = json.loads(resp.text)
+    except:
+        print_Info('Error to get Wheather data ')
+        return
 
     query_list = []
     data_list = data_dic['list']
@@ -106,9 +110,13 @@ def SaveWeatherInFo(urls, file_name, table_name, db_class):
         db_class.DBDeleteRange(file_name, table_name, 'ID', 1, 20)
 
 def RequestWeatherInFo(urls,dis_date,dis_time, *args):
-    resp = requests.get(url=urls, params=params)
-    data_dic = json.loads(resp.text)
-    print_all_str = json.dumps(data_dic, sort_keys=True, indent=4)
+    try:
+        resp = requests.get(url=urls, params=params)
+        data_dic = json.loads(resp.text)
+        print_all_str = json.dumps(data_dic, sort_keys=True, indent=4)
+    except:
+        print_Info('Error to get Wheather data ')
+        return
     #print print_all_str
     data_list=0
 
@@ -245,9 +253,6 @@ def decode_string(data_str,light_on_time):
 
 mqtt_command = DummyDeviceThread(1, 'MQTT_COMMAND', MQTT_subscribe)
 mqtt_command.start()
-
-
-
 
 DB_wheather = DB_Process.DBProc()
 arg = ('Date text', 'Wheather text', 'Temp real')
