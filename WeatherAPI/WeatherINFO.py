@@ -15,6 +15,7 @@ from common_func import *
 #c4ca3e7f12ae57ad1fca3d82f066d33b API Key
 #http://api.openweathermap.org/data/2.5/weather?id=1846898&APPID={API Key}
 #http://api.openweathermap.org/data/2.5/forecast?id=1846898&APPID=c4ca3e7f12ae57ad1fca3d82f066d33b
+#1f1d89264ad1bf736b5a89ba0b4da7de change api key 
 #id 1846898 anyang, id 1845457 Jeonju, id 1835847 Seoul
 #City list 파일을 참조해서 얻어올 데이터로 쓰는것도 좋을 것 같음
 #temp unit 켈빈, 절대온도
@@ -27,7 +28,7 @@ CURRENT = 10
 FORCAST = 11
 params = dict(
     id=1846898, #KR anyang
-    APPID='c4ca3e7f12ae57ad1fca3d82f066d33b'
+    APPID='1f1d89264ad1bf736b5a89ba0b4da7de'
 )
 weather_main_list = ["Thunderstorm","Drizzle","Rain","Snow","Atmosphere","Clear","Clouds","Extreme","Additional","Haze"]
 LIGHT_ON_TIME = ["13:57", "21:00"]
