@@ -312,6 +312,7 @@ def scanLightState(_device_info ,t_event):
 				print_dumDevInfo('Detect Dark!! Send Command to Device')
 				sock_lists = sendLightDataToDevice(_device_info,isChange[1],2,'[[Nano]]','[[Master]]')
 				MQTT_publish('mqtt_get_weather')
+				MQTT_publish_led('on')
 				if sock_lists:
 					if S_timer.has_key('offCMDTimer') == False:
 						offCMDTimer = LedJarTimer('light_off_command_timer',10, offCommandTimer,sock_lists,'offCMDTimer')
@@ -363,6 +364,12 @@ def MQTT_publish( pub_str):
 	mqttc = mqtt.Client()
 	mqttc.connect("127.0.0.1", 1883)
 	mqttc.publish("IOT_dat/command", pub_str)
+	mqttc.loop(2)
+
+def MQTT_publish_led( pub_str):
+	mqttc = mqtt.Client()
+	mqttc.connect("127.0.0.1", 1883)
+	mqttc.publish("home/led", pub_str)
 	mqttc.loop(2)
 
 def MakeMsgToSendPISA(msgs):

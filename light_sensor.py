@@ -1,7 +1,5 @@
 
 import Adafruit_BBIO.ADC as ADC
-import time 
-import threading
 from common_func import *
 
 class LightSensor:
